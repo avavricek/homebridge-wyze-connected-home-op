@@ -27,6 +27,12 @@ module.exports = class WyzeMeshLight extends WyzeAccessory {
     //    https://github.com/QuickSander/homebridge-http-rgb-push/blob/master/index.js
     this.cache = {};
     this.cacheUpdated = false;
+
+	const service = this.getService();
+	this.adaptiveLightingController = new plugin.api.hap.AdaptiveLightingController(service);
+	this.homeKitAccessory.configureController(this.adaptiveLightingController);
+	// this.homeKitAccessory.adaptiveLightingController = this.adaptiveLightingController;
+	// this.homeKitAccessory.context.adaptiveLighting = true
   }
 
   async updateCharacteristics(device) {
@@ -98,6 +104,10 @@ module.exports = class WyzeMeshLight extends WyzeAccessory {
 
   async setOn(value, callback) {
     this.plugin.log.info(`Setting power for ${this.homeKitAccessory.context.mac} to ${value}`);
+	if (this.adaptiveLightingController.isAdaptiveLightingActive() && value) {
+		this.plugin.log.info('Updating Adaptive color')
+		this.adaptiveLightingController.emit('update');
+	}
 
     try {
       await this.runActionList(WYZE_API_POWER_PROPERTY, (value) ? '1' : '0');
@@ -119,6 +129,11 @@ module.exports = class WyzeMeshLight extends WyzeAccessory {
   }
 
   async setColorTemperature(value, callback) {
+	if (this.adaptiveLightingController.isAdaptiveLightingActive() && !this.getCharacteristic(Characteristic.On).value) {
+		//this.plugin.log.info('light is off');
+		callback();
+		return;
+	}
     let floatValue = this._rangeToFloat(value, HOMEKIT_COLOR_TEMP_MIN, HOMEKIT_COLOR_TEMP_MAX);
     let wyzeValue = this._floatToRange(floatValue, WYZE_COLOR_TEMP_MIN, WYZE_COLOR_TEMP_MAX);
 
