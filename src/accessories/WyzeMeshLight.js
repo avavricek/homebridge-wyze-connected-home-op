@@ -31,8 +31,6 @@ module.exports = class WyzeMeshLight extends WyzeAccessory {
 	const service = this.getService();
 	this.adaptiveLightingController = new plugin.api.hap.AdaptiveLightingController(service);
 	this.homeKitAccessory.configureController(this.adaptiveLightingController);
-	// this.homeKitAccessory.adaptiveLightingController = this.adaptiveLightingController;
-	// this.homeKitAccessory.context.adaptiveLighting = true
   }
 
   async updateCharacteristics(device) {
@@ -103,9 +101,9 @@ module.exports = class WyzeMeshLight extends WyzeAccessory {
   }
 
   async setOn(value, callback) {
-    this.plugin.log.info(`Setting power for ${this.homeKitAccessory.context.mac} to ${value}`);
+    this.plugin.log.debug(`Setting power for ${this.homeKitAccessory.context.mac} to ${value}`);
 	if (this.adaptiveLightingController.isAdaptiveLightingActive() && value) {
-		this.plugin.log.info('Updating Adaptive color')
+		this.plugin.log.debug('Updating Adaptive color')
 		this.adaptiveLightingController.emit('update');
 	}
 
@@ -118,7 +116,7 @@ module.exports = class WyzeMeshLight extends WyzeAccessory {
   }
 
   async setBrightness(value, callback) {
-    this.plugin.log.info(`Setting brightness for ${this.homeKitAccessory.context.mac} to ${value}`);
+    this.plugin.log.debug(`Setting brightness for ${this.homeKitAccessory.context.mac} to ${value}`);
 
     try {
       await this.runActionList(WYZE_API_BRIGHTNESS_PROPERTY, value);
@@ -130,14 +128,13 @@ module.exports = class WyzeMeshLight extends WyzeAccessory {
 
   async setColorTemperature(value, callback) {
 	if (this.adaptiveLightingController.isAdaptiveLightingActive() && !this.getCharacteristic(Characteristic.On).value) {
-		//this.plugin.log.info('light is off');
 		callback();
 		return;
 	}
     let floatValue = this._rangeToFloat(value, HOMEKIT_COLOR_TEMP_MIN, HOMEKIT_COLOR_TEMP_MAX);
     let wyzeValue = this._floatToRange(floatValue, WYZE_COLOR_TEMP_MIN, WYZE_COLOR_TEMP_MAX);
 
-    this.plugin.log.info(`Setting color temperature for ${this.homeKitAccessory.context.mac} to ${value} (${wyzeValue})`);
+    this.plugin.log.debug(`Setting color temperature for ${this.homeKitAccessory.context.mac} to ${value} (${wyzeValue})`);
 
     try {
       await this.runActionList(WYZE_API_COLOR_TEMP_PROPERTY, wyzeValue);
@@ -148,7 +145,6 @@ module.exports = class WyzeMeshLight extends WyzeAccessory {
   }
 
   async setHue(value, callback) {
-    this.plugin.log.info(`Setting hue (color) for ${this.homeKitAccessory.context.mac} to ${value}`);
     this.plugin.log.debug(`(H)S Values: ${value}, ${this.cache.saturation}`);
 
     try {
@@ -170,7 +166,6 @@ module.exports = class WyzeMeshLight extends WyzeAccessory {
   }
 
   async setSaturation(value, callback) {
-    this.plugin.log.info(`Setting saturation (color) for ${this.homeKitAccessory.context.mac} to ${value}`);
     this.plugin.log.debug(`H(S) Values: ${this.cache.saturation}, ${value}`);
 
     try {
